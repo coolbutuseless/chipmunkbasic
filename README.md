@@ -56,15 +56,26 @@ remotes::install_github('coolbutuseless/chipmunkbasic')
 
   - [Basic
     Circles](https://coolbutuseless.github.io/package/chipmunkbasic/articles/basic.html)
+    shows how circles can be added to a scene
   - [Basic
     Boxes](https://coolbutuseless.github.io/package/chipmunkbasic/articles/basic-boxes.html)
+    shows how boxes can be added to a scene and rendered in ggplot
   - [Galton
     board](https://coolbutuseless.github.io/package/chipmunkbasic/articles/galton.html)
   - [Plop](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plot.html)
+    shows a large bowling ball being projected into a bucket of elastic
+    circles
+  - [Plop
+    (polygon)](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plot-polygon.html)
+    shows a large triangle (with initial angular velocity) being
+    projected into a bucket of elastic circles
+  - [Inevitable
+    Destruction](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction.html)
+    shows a bowling ball destroying a tower of blocks
 
 ## ToDo
 
-  - Expose more of the underlying C library
+  - Add constraints and joints
 
 ## Galton Board
 
