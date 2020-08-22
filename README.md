@@ -72,6 +72,9 @@ remotes::install_github('coolbutuseless/chipmunkbasic')
   - [Inevitable
     Destruction](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction.html)
     shows a bowling ball destroying a tower of blocks
+  - [Inevitable
+    Destruction 2](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction-two.html)
+    more gratuitous destruction
 
 ## ToDo
 
