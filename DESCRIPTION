@@ -1,7 +1,7 @@
 Package: chipmunkbasic
 Type: Package
 Title: R6 Interface to Chipmunk2d Physics Library
-Version: 0.1.0
+Version: 0.1.1
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: R6 interface to chipmunk2d physics library.
@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.0
+URL: https://github.com/coolbutuseless/chipmunkbasic,https://coolbutuseless.github.io/package/chipmunkbasic
 Imports:
   R6,
   chipmunkcore

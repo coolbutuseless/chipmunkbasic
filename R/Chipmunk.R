@@ -40,6 +40,8 @@ Chipmunk <- R6::R6Class(
         friction = numeric(0)
       )
 
+      private$poly_count <- 0L
+
       invisible(self)
     },
 
@@ -86,11 +88,13 @@ Chipmunk <- R6::R6Class(
     #' @param vx,vy initial body velocity
     #' @param radius radius of body. default: 1
     #' @param mass mass of body. default: 1
+    #' @param angular_velocity default: 0  degrees/second
     #' @param friction default: 0.7
     #' @param elasticity default: 0  (no bounce).  Valid range [0, 1]
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    add_circle = function(x, y, vx = 0, vy = 0, radius = 1, mass = 1, friction = 0.7,
-                          elasticity = 0) {
+    add_circle = function(x, y, vx = 0, vy = 0, radius = 1,
+                          angular_velocity = 0,
+                          mass = 1, friction = 0.7, elasticity = 0) {
 
       moment                <- cpMomentForCircle(mass, 0, radius, cpv(0, 0))
       body                  <- cpBodyNew(mass, moment);
@@ -98,6 +102,7 @@ Chipmunk <- R6::R6Class(
       cpBodySetPosition(body, cpv(x, y))
       cpBodySetVelocity(body, cpv(vx, vy))
       cpSpaceAddBody(private$space, body)
+      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
 
 
       shape = cpCircleShapeNew(body, radius, cpv(0, 0));
@@ -142,12 +147,13 @@ Chipmunk <- R6::R6Class(
     #' @param width,height body width and height
     #' @param angle rotation angle in degrees. default 0
     #' @param radius radius of rounded corner
+    #' @param angular_velocity default: 0  degrees/second
     #' @param mass mass of body. default: 1
     #' @param friction default: 0.7
     #' @param elasticity default: 0  (no bounce).  Valid range [0, 1]
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     add_box = function(x, y, vx = 0, vy = 0, width = 1.73, height = 1, angle = 0,
-                          radius = 0.05,
+                          radius = 0.05, angular_velocity = 0,
                           mass = 1, friction = 0.7, elasticity = 0) {
 
       moment             <- cpMomentForBox(mass, width, height)
@@ -157,6 +163,7 @@ Chipmunk <- R6::R6Class(
       cpBodySetPosition(body, cpv( x,  y))
       cpBodySetVelocity(body, cpv(vx, vy))
       cpBodySetAngle   (body, angle * pi/180)
+      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
 
 
       shape <- cpBoxShapeNew(body, width, height, radius)
@@ -210,55 +217,152 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_boxes_as_polygons = function() {
 
-      bodies <- self$get_boxes()
+      box_centroids <- cm$get_boxes()
 
-      bodies <- transform(
-        bodies,
-        x1 = - width/2,
-        x2 = + width/2,
-        x3 = + width/2,
-        x4 = - width/2,
+      box_centroids$xc <- box_centroids$x
+      box_centroids$yc <- box_centroids$y
 
-        y1 = - height/2,
-        y2 = - height/2,
-        y3 = + height/2,
-        y4 = + height/2
+      box_vertices <- rbind(
+        transform(box_centroids, vertex = 1, x = -width/2, y = -height/2),
+        transform(box_centroids, vertex = 2, x =  width/2, y = -height/2),
+        transform(box_centroids, vertex = 3, x =  width/2, y =  height/2),
+        transform(box_centroids, vertex = 4, x = -width/2, y =  height/2)
       )
 
-      b1 <- transform(bodies, xs = x + x1 * cos(angle) - y1 * sin(angle), ys = y + x1 * sin(angle) + y1 * cos(angle), vertex = 1L)
-      b2 <- transform(bodies, xs = x + x2 * cos(angle) - y2 * sin(angle), ys = y + x2 * sin(angle) + y2 * cos(angle), vertex = 2L)
-      b3 <- transform(bodies, xs = x + x3 * cos(angle) - y3 * sin(angle), ys = y + x3 * sin(angle) + y3 * cos(angle), vertex = 3L)
-      b4 <- transform(bodies, xs = x + x4 * cos(angle) - y4 * sin(angle), ys = y + x4 * sin(angle) + y4 * cos(angle), vertex = 4L)
+      box_vertices <- box_vertices[, c('idx', 'vertex', 'xc', 'yc', 'x', 'y', 'angle')]
+      box_vertices <- box_vertices[with(box_vertices,order(idx, vertex)),]
 
-      rects <- rbind(b1, b2, b3, b4)[, c('idx', 'vertex', 'xs', 'ys')]
-      names(rects) <- c('idx', 'vertex', 'x', 'y')
+      polys <- transform(
+        box_vertices,
+        x1 = x * cos(angle) - y * sin(angle) + xc,
+        y  = x * sin(angle) + y * cos(angle) + yc
+      )
 
-      rects[with(rects,order(idx, vertex)),]
+      polys$x <- polys$x1
+
+      polys <- polys[, c('idx', 'vertex', 'x', 'y')]
+
+      polys
     },
 
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    #' Remove a circle from the simulation
+    #' Add a convex hull polygon to the space
     #'
-    #' To speed up the simulation process, you could test bodies for
-    #' location and remove those you are no longer interested in.
-    #'
-    #'
-    #' @param idx index of circle to remove
+    #' @param xs,ys polygon vertices
+    #' @param x,y initial body location
+    #' @param angle initial rotation angle in degrees. default 0
+    #' @param vx,vy initial body velocity
+    #' @param radius radius of rounded corners
+    #' @param angular_velocity default: 0  degrees/second
+    #' @param mass mass of body. default: 1
+    #' @param friction default: 0.7
+    #' @param elasticity default: 0  (no bounce).  Valid range [0, 1]
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    remove_circle = function(idx) {
-      if (idx < 1 || idx > length(private$circle_bodies)) {
-        warning("Nope")
-        return(invisible(self))
+    add_polygon = function(
+      xs, ys,
+      angle = 0,
+      x = 0, y = 0,
+      vx = 0, vy = 0,
+      radius = 0.05,
+      angular_velocity = 0,
+      mass = 1, friction = 0.7, elasticity = 0) {
+
+      if (length(xs) != length(ys) || length(xs) < 3) {
+        stop("add_polygon requires at least vertices")
       }
 
-      cpSpaceRemoveShape(private$space, private$circle_shapes[[idx]])
-      cpSpaceRemoveBody (private$space, private$circle_bodies[[idx]])
-      private$circle_shapes[[idx]] <- NULL
-      private$circle_bodies[[idx]] <- NULL
+      # The vertices as a list of 'cpVect' objects
+      verts <- cpVect(xs, ys)
+
+
+      moment <- cpMomentForPoly(
+        m      = mass,
+        count  = length(xs),
+        verts  = verts,
+        offset = cpVect(0, 0),
+        radius = radius
+      )
+
+      body <- cpBodyNew(mass, moment);
+
+      private$poly_bodies <- append(private$poly_bodies, body)
+      cpSpaceAddBody(private$space, body)
+      cpBodySetPosition(body, cpv( x,  y))
+      cpBodySetVelocity(body, cpv(vx, vy))
+      cpBodySetAngle   (body, angle * pi/180)
+      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
+
+
+      shape <- cpPolyShapeNew(
+        body      = body,
+        count     = length(xs),
+        verts     = verts,
+        transform = cpTransformIdentity(),
+        radius    = radius
+      )
+      cpShapeSetFriction(shape, friction)
+      cpShapeSetElasticity(shape, elasticity)
+      cpSpaceAddShape(private$space, shape)
+
+      private$poly_shapes <- append(private$poly_shapes, shape)
+
+      private$poly_count <- private$poly_count + 1L
+
+      # inefficent accumulation of polygons. fixme.
+      private$poly_verts <- rbind(
+        private$poly_verts,
+        data.frame(
+          x      = xs,
+          y      = ys,
+          idx    = private$poly_count,
+          vertex = seq_along(xs)
+        )
+      )
 
       invisible(self)
+    },
+
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #' @description Get the location of all the polygons
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    get_polygons = function() {
+
+      xs <- numeric(length(private$poly_bodies))
+      ys <- numeric(length(private$poly_bodies))
+      rs <- numeric(length(private$poly_bodies))
+
+      for (i in seq_along(private$poly_bodies)) {
+        body  <- private$poly_bodies[[i]]
+        pos   <- cpBodyGetPosition(body)
+        pos   <- as.list(pos)
+        xs[i] <- pos$x
+        ys[i] <- pos$y
+        rs[i] <- cpBodyGetAngle(body)
+      }
+
+      poly_centroids <- data.frame(
+        idx    = seq_along(xs),
+        xc     = xs,
+        yc     = ys,
+        angle  = rs
+      )
+
+      polys <- merge(poly_centroids, private$poly_verts)
+
+      polys <- transform(
+        polys,
+        x1 = x * cos(angle) - y * sin(angle) + xc,
+        y  = x * sin(angle) + y * cos(angle) + yc
+      )
+
+      polys$x <- polys$x1
+
+      polys <- polys[, c('idx', 'vertex', 'x', 'y')]
+
+      polys
     },
 
 
@@ -299,6 +403,11 @@ Chipmunk <- R6::R6Class(
     box_shapes     = NULL,
     box_widths     = NULL,
     box_heights    = NULL,
+
+    poly_bodies = NULL,
+    poly_shapes = NULL,
+    poly_verts  = NULL,
+    poly_count  = NULL,
 
     static_segments_df = NULL,
     static_segments    = NULL

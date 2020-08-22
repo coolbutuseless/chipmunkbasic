@@ -86,6 +86,10 @@ ggplot(boxes) +
 ```
 
 
+
+
+
+
 ## Full animation
 
 
@@ -94,6 +98,9 @@ ggplot(boxes) +
 unlink(list.files("vignettes/png", "*.png", full.names = TRUE))
 
 for (i in seq_len(100)) {
+  
+  if (i %% 10 == 0) message(i)
+  
   cm$advance(3)
   
   boxes <- cm$get_boxes_as_polygons()

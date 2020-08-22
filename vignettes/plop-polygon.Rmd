@@ -1,8 +1,8 @@
 ---
-title: "Plop"
+title: "Plop - Polygon"
 output: html_document
 vignette: >
-  %\VignetteIndexEntry{Plop}
+  %\VignetteIndexEntry{Plop - Polygon}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ library(ggplot2)
 ```
 
 
-## Plop
+## Plop a polygon
 
 
 ```{r setup}
@@ -74,13 +74,17 @@ for (i in seq_len(Nballs)) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Add the bowling ball
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cm$add_circle(
+cm$add_polygon(
+  xs       = c(0, -5, 5),
+  ys       = c(0, 15, 15),
+  angle    = 0,
   x        = -70,
   y        = 10,
-  radius   = 10,
-  mass     = 200,
+  radius   = 0.1,
+  mass     = 20,
   vx       = 15,
   vy       = 70,
+  angular_velocity = 90,
   friction = 0.01
 )
 ```
@@ -89,7 +93,7 @@ cm$add_circle(
 ## Animate!
 
 * **Advance** the state of the simulation
-* get the positions of all the circles
+* get the positions of all the objects
 * Plot everything.
 * Repeat
 
@@ -102,24 +106,30 @@ unlink(list.files("vignettes/png", "*.png", full.names = TRUE))
 
 
 steps <- 600; advance <-  6
+# steps <-  60; advance <- 60
+# steps <- 120; advance <- 30
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # (1) advance the simulation (2) plot the circles (3) Repeat.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 for (i in seq_len(steps)) {
   
-  if (i  %% 10 == 0) message(i)
-  
   cm$advance(advance)
   
   circles <- cm$get_circles()
-  large   <- circles[Nballs + 1,]
-  circles <- circles[seq_len(Nballs),]
+
+  polys <- cm$get_polygons()
+  
+  if (i  %% 10 == 0) {
+    message(i)
+    
+    # print(polys)
+  }
   
   
   p <- ggplot() + 
     geom_point(data = circles, aes(x, y, size = I(2.845*r)), colour = 'black') + 
-    geom_point(data = large , aes(x, y), size = 30 , colour = '#002366') + 
+    geom_polygon(data = polys , aes(x, y), fill = '#445566') +
     geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2), colour = 'lightblue') + 
     coord_fixed(xlim = c(-70, 70), ylim = c(0, 100)) + 
     theme_void() +
@@ -134,12 +144,12 @@ for (i in seq_len(steps)) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ffmpeg - create mp4 from PNG files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-system("ffmpeg -y -framerate 30 -pattern_type glob -i 'vignettes/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 vignettes/anim/plop.mp4")
+system("ffmpeg -y -framerate 30 -pattern_type glob -i 'vignettes/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 vignettes/anim/plop-polygon.mp4")
 
 ```
 
 
-![](anim/plop.mp4)
+![](anim/plop-polygon.mp4)
 
 
 

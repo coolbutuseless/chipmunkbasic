@@ -19,7 +19,8 @@ Chipmunk class
 \item \href{#method-add_box}{\code{Chipmunk$add_box()}}
 \item \href{#method-get_boxes}{\code{Chipmunk$get_boxes()}}
 \item \href{#method-get_boxes_as_polygons}{\code{Chipmunk$get_boxes_as_polygons()}}
-\item \href{#method-remove_circle}{\code{Chipmunk$remove_circle()}}
+\item \href{#method-add_polygon}{\code{Chipmunk$add_polygon()}}
+\item \href{#method-get_polygons}{\code{Chipmunk$get_polygons()}}
 \item \href{#method-advance}{\code{Chipmunk$advance()}}
 \item \href{#method-clone}{\code{Chipmunk$clone()}}
 }
@@ -88,6 +89,7 @@ Add a circular body to the space
   vx = 0,
   vy = 0,
   radius = 1,
+  angular_velocity = 0,
   mass = 1,
   friction = 0.7,
   elasticity = 0
@@ -102,6 +104,8 @@ Add a circular body to the space
 \item{\code{vx, vy}}{initial body velocity}
 
 \item{\code{radius}}{radius of body. default: 1}
+
+\item{\code{angular_velocity}}{default: 0  degrees/second}
 
 \item{\code{mass}}{mass of body. default: 1}
 
@@ -137,6 +141,7 @@ Add a box body to the space
   height = 1,
   angle = 0,
   radius = 0.05,
+  angular_velocity = 0,
   mass = 1,
   friction = 0.7,
   elasticity = 0
@@ -155,6 +160,8 @@ Add a box body to the space
 \item{\code{angle}}{rotation angle in degrees. default 0}
 
 \item{\code{radius}}{radius of rounded corner}
+
+\item{\code{angular_velocity}}{default: 0  degrees/second}
 
 \item{\code{mass}}{mass of body. default: 1}
 
@@ -183,31 +190,67 @@ a data.frame with idx, width, height and rotation angle (radians)
 \if{latex}{\out{\hypertarget{method-get_boxes_as_polygons}{}}}
 \subsection{Method \code{get_boxes_as_polygons()}}{
 Get the location of all the boxes as a list of corner vertices
-Remove a circle from the simulation
-
-To speed up the simulation process, you could test bodies for
-location and remove those you are no longer interested in.
+Add a convex hull polygon to the space
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_boxes_as_polygons()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-remove_circle"></a>}}
-\if{latex}{\out{\hypertarget{method-remove_circle}{}}}
-\subsection{Method \code{remove_circle()}}{
+\if{html}{\out{<a id="method-add_polygon"></a>}}
+\if{latex}{\out{\hypertarget{method-add_polygon}{}}}
+\subsection{Method \code{add_polygon()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$remove_circle(idx)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_polygon(
+  xs,
+  ys,
+  angle = 0,
+  x = 0,
+  y = 0,
+  vx = 0,
+  vy = 0,
+  radius = 0.05,
+  angular_velocity = 0,
+  mass = 1,
+  friction = 0.7,
+  elasticity = 0
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{idx}}{index of circle to remove
-Advance the simulation by N timesteps}
+\item{\code{xs, ys}}{polygon vertices}
+
+\item{\code{angle}}{initial rotation angle in degrees. default 0}
+
+\item{\code{x, y}}{initial body location}
+
+\item{\code{vx, vy}}{initial body velocity}
+
+\item{\code{radius}}{radius of rounded corners}
+
+\item{\code{angular_velocity}}{default: 0  degrees/second}
+
+\item{\code{mass}}{mass of body. default: 1}
+
+\item{\code{friction}}{default: 0.7}
+
+\item{\code{elasticity}}{default: 0  (no bounce).  Valid range [0, 1]}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_polygons"></a>}}
+\if{latex}{\out{\hypertarget{method-get_polygons}{}}}
+\subsection{Method \code{get_polygons()}}{
+Get the location of all the polygons
+Advance the simulation by N timesteps
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_polygons()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-advance"></a>}}
