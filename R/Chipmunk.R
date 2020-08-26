@@ -70,13 +70,15 @@ Chipmunk <- R6::R6Class(
     #' @param body body to add. type = cpBody
     #' @param x,y initial body location
     #' @param vx,vy initial body velocity
+    #' @param angle orientation angle in degrees
     #' @param angular_velocity default: 0  degrees/second
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    add_body = function(type, body, x, y, vx, vy, angular_velocity) {
+    add_body = function(type, body, x, y, vx, vy, angle, angular_velocity) {
       stopifnot(type %in% c(dynamic_shapes))
 
       cpBodySetPosition(body, cpv(x, y))
       cpBodySetVelocity(body, cpv(vx, vy))
+      cpBodySetAngle   (body, angle * pi/180)
       cpBodySetAngularVelocity(body, angular_velocity * pi/180)
       cpSpaceAddBody(private$space, body)
 
@@ -140,18 +142,15 @@ Chipmunk <- R6::R6Class(
                           angular_velocity = 0,
                           mass = 1, friction = 0.7, elasticity = 0) {
 
-      moment                <- cpMomentForCircle(mass, 0, radius, cpv(0, 0))
-      body                  <- cpBodyNew(mass, moment);
-      # private$circle_bodies <- append(private$circle_bodies, body)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create a body and add it to the space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      moment <- cpMomentForCircle(mass, 0, radius, cpv(0, 0))
+      body   <- cpBodyNew(mass, moment);
 
       self$add_body('circle', body, x = x, y = y, vx = vx, vy = vy,
+                    angle = 0,
                     angular_velocity = angular_velocity)
-
-      # cpBodySetPosition(body, cpv(x, y))
-      # cpBodySetVelocity(body, cpv(vx, vy))
-      # cpSpaceAddBody(private$space, body)
-      # cpBodySetAngularVelocity(body, angular_velocity * pi/180)
-
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Create shape and add to space
@@ -208,15 +207,15 @@ Chipmunk <- R6::R6Class(
                           radius = 0.05, angular_velocity = 0,
                           mass = 1, friction = 0.7, elasticity = 0) {
 
-      moment             <- cpMomentForBox(mass, width, height)
-      body               <- cpBodyNew(mass, moment);
-      private$box_bodies <- append(private$box_bodies, body)
-      cpSpaceAddBody(private$space, body)
-      cpBodySetPosition(body, cpv( x,  y))
-      cpBodySetVelocity(body, cpv(vx, vy))
-      cpBodySetAngle   (body, angle * pi/180)
-      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create a body and add it to the space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      moment <- cpMomentForBox(mass, width, height)
+      body   <- cpBodyNew(mass, moment);
 
+      self$add_body('box', body, x = x, y = y, vx = vx, vy = vy,
+                    angle = angle,
+                    angular_velocity = angular_velocity)
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Create shape and add to space
@@ -227,8 +226,8 @@ Chipmunk <- R6::R6Class(
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Store meta info about shape
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      private$box_widths <- c(private$box_widths , width )
-      private$box_heights<- c(private$box_heights, height)
+      private$box_widths  <- c(private$box_widths , width )
+      private$box_heights <- c(private$box_heights, height)
 
 
       invisible(self)
@@ -242,12 +241,14 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_boxes = function() {
 
-      xs <- numeric(length(private$box_bodies))
-      ys <- numeric(length(private$box_bodies))
-      rs <- numeric(length(private$box_bodies))
+      bodies <- private$body[['box']]
 
-      for (i in seq_along(private$box_bodies)) {
-        body  <- private$box_bodies[[i]]
+      xs <- numeric(length(bodies))
+      ys <- numeric(length(bodies))
+      rs <- numeric(length(bodies))
+
+      for (i in seq_along(bodies)) {
+        body  <- bodies[[i]]
         pos   <- cpBodyGetPosition(body)
         pos   <- as.list(pos)
         xs[i] <- pos$x
@@ -332,6 +333,9 @@ Chipmunk <- R6::R6Class(
       verts <- cpVect(xs, ys)
 
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create a body and add it to the space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       moment <- cpMomentForPoly(
         m      = mass,
         count  = length(xs),
@@ -342,13 +346,9 @@ Chipmunk <- R6::R6Class(
 
       body <- cpBodyNew(mass, moment);
 
-      private$poly_bodies <- append(private$poly_bodies, body)
-      cpSpaceAddBody(private$space, body)
-      cpBodySetPosition(body, cpv( x,  y))
-      cpBodySetVelocity(body, cpv(vx, vy))
-      cpBodySetAngle   (body, angle * pi/180)
-      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
-
+      self$add_body('polygon', body, x = x, y = y, vx = vx, vy = vy,
+                    angle = angle,
+                    angular_velocity = angular_velocity)
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Create shape and add to space
@@ -388,12 +388,14 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_polygons = function() {
 
-      xs <- numeric(length(private$poly_bodies))
-      ys <- numeric(length(private$poly_bodies))
-      rs <- numeric(length(private$poly_bodies))
+      bodies <- private$body[['polygon']]
 
-      for (i in seq_along(private$poly_bodies)) {
-        body  <- private$poly_bodies[[i]]
+      xs <- numeric(length(bodies))
+      ys <- numeric(length(bodies))
+      rs <- numeric(length(bodies))
+
+      for (i in seq_along(bodies)) {
+        body  <- bodies[[i]]
         pos   <- cpBodyGetPosition(body)
         pos   <- as.list(pos)
         xs[i] <- pos$x
@@ -460,13 +462,9 @@ Chipmunk <- R6::R6Class(
 
     circle_radii   = NULL,
 
-    box_bodies     = NULL,
-    box_shapes     = NULL,
     box_widths     = NULL,
     box_heights    = NULL,
 
-    poly_bodies    = NULL,
-    poly_shapes    = NULL,
     poly_verts     = NULL,
     poly_count     = NULL,
 

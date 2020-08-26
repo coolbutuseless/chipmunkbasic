@@ -77,7 +77,7 @@ Add a body of the given type}
 \if{latex}{\out{\hypertarget{method-add_body}{}}}
 \subsection{Method \code{add_body()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_body(type, body, x, y, vx, vy, angular_velocity)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_body(type, body, x, y, vx, vy, angle, angular_velocity)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -90,6 +90,8 @@ Add a body of the given type}
 \item{\code{x, y}}{initial body location}
 
 \item{\code{vx, vy}}{initial body velocity}
+
+\item{\code{angle}}{orientation angle in degrees}
 
 \item{\code{angular_velocity}}{default: 0  degrees/second
 Add a static segment}
