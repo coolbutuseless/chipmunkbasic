@@ -21,6 +21,8 @@ library(ggplot2)
 
 ## Galton Board
 
+Thanks to [Esteban Moro](https://twitter.com/estebanmoro) for fine-tuning this simulation, and contributing his changes
+
 
 ## Galton Board Setup
 
@@ -37,11 +39,11 @@ cm <- Chipmunk$new(time_step = 0.005)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Add funnel segments
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-gap <- 3
-cm$add_static_segment( -70, 150, -gap, 100)
-cm$add_static_segment(  70, 150,  gap, 100)
-cm$add_static_segment(-gap, 100, -gap,  90)
-cm$add_static_segment( gap, 100,  gap,  90)
+gap <- 2
+cm$add_static_segment( -70, 130, -gap, 91)
+cm$add_static_segment(  70, 130,  gap, 91)
+cm$add_static_segment(-gap,  91, -gap, 90)
+cm$add_static_segment( gap,  91,  gap, 90)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,8 +72,8 @@ for (i in 1:15) {
 # Add slots 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 floor <- 0
-width <- 50
-for (x in seq(-width, width, 5)) {
+width <- 60
+for (x in seq(-width, width, 3)) {
     cm$add_static_segment(x, floor,  x,  40)
 }
 
@@ -96,15 +98,15 @@ ggplot() +
 ## Add some circles to fall through the board
 
 
-```{r eval = FALSE}
+```{r eval = TRUE}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Add some circles 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-for (i in 1:400) {
+for (i in 1:500) {
   cm$add_circle(
     x        = runif(1,  -20,  20), 
-    y        = runif(1,  120, 150),
-    radius   = 0.8,
+    y        = runif(1,  105, 120),
+    radius   = 0.7,
     friction = 0.01
   )
 }
@@ -123,12 +125,13 @@ for (i in 1:400) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Clear out the target directory for all the frames
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-unlink(list.files("man/figures/png", "*.png", full.names = TRUE))
+unlink(list.files("vignettes/png", "*.png", full.names = TRUE))
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # (1) advance the simulation (2) plot the circles (3) Repeat.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+x0 <- seq(-60,60,len=100)
 for (i in 1:1000) {
   
   if (i  %% 10 == 0) message(i)
@@ -143,10 +146,11 @@ for (i in 1:1000) {
     coord_fixed() + 
     theme_void() + 
     theme(legend.position = 'none') + 
+    geom_line(data=data.frame(x0),inherit.aes = F,aes(x=x0,y=1000*exp(-x0^2/(2*10^2))/sqrt(2*pi*10^2)),col="darkred",alpha=0.8,lwd=1) +
     NULL
   
 
-  outfile <- sprintf("man/figures/png/%04i.png", i)
+  outfile <- sprintf("vignettes/png/%04i.png", i)
   ggsave(outfile, p, width = 7, height = 7)
 }
 
@@ -154,12 +158,12 @@ for (i in 1:1000) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ffmpeg - create mp4 from PNG files
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# system("ffmpeg -y -framerate 30 -pattern_type glob -i 'man/figures/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 man/figures/galton.mp4")
+system("ffmpeg -y -framerate 30 -pattern_type glob -i 'vignettes/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 vignettes/anim/galton.mp4")
 
 # mp4 to gif
-# ffmpeg -i galton.mp4 -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' out.gif
+system("ffmpeg -y -i vignettes/anim/galton.mp4 -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' man/figures/galton-1.gif")
 
-# gifsicle -O99 -o out2.gif -k 16 out.gif
+system("gifsicle -O99 -o man/figures/galton-2.gif -k 16 man/figures/galton-1.gif")
 
 ```
 
