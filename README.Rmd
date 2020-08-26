@@ -97,6 +97,7 @@ Thanks to [Esteban Moro](https://twitter.com/estebanmoro) for fine-tuning this s
 
 
 ```{r eval = FALSE}
+# library(chipmunkcore)
 library(chipmunkbasic)
 library(ggplot2)
 set.seed(1)

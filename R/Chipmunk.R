@@ -1,12 +1,14 @@
 
 
-
+valid_shapes <- c('segment', 'circle', 'box', 'polygon',
+                  'static_segment', 'static_circle', 'static_box', 'static_polygon')
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Chipmunk class
 #'
 #' @import R6
 #'
+#' @import chipmunkcore
 #' @export
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Chipmunk <- R6::R6Class(
@@ -29,17 +31,8 @@ Chipmunk <- R6::R6Class(
       cpSpaceSetGravity(private$space, gravity)
 
 
-      private$static_segments <- list()
-
       private$circle_radii <- numeric(0)
 
-      private$static_segments_df = data.frame(
-        x1 = numeric(0),
-        y1 = numeric(0),
-        x2 = numeric(0),
-        y2 = numeric(0),
-        friction = numeric(0)
-      )
 
       private$poly_count <- 0L
 
@@ -60,10 +53,7 @@ Chipmunk <- R6::R6Class(
       cpShapeSetElasticity(shape, elasticity)
       cpSpaceAddShape(private$space, shape)
 
-      stopifnot(type %in% c(
-        'segment', 'circle', 'box', 'polygon',
-        'static_segment', 'static_circle', 'static_box', 'static_polygon'
-      ))
+      stopifnot(type %in% c(valid_shapes))
 
       private$shape[[type]] <- append(private$shape[[type]], shape)
     },
@@ -86,14 +76,14 @@ Chipmunk <- R6::R6Class(
       # Create a shape
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       shape <- cpSegmentShapeNew(body, cpv(x1, y1), cpv(x2, y2), 0)
-      self$add_shape('segment', shape, friction = friction, elasticity = elasticity)
+      self$add_shape('static_segment', shape, friction = friction, elasticity = elasticity)
 
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # Store segment information
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       this_info <- data.frame(x1, y1, x2, y2)
 
-      private$df[['segment']] <- rbind(private$df[['segment']], this_info)
+      private$df[['static_segment']] <- rbind(private$df[['static_segment']], this_info)
 
       invisible(self)
     },
@@ -103,7 +93,7 @@ Chipmunk <- R6::R6Class(
     #' @description Get the data.frame of all current segments
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_static_segments = function() {
-      private$static_segments_df
+      private$df[['static_segment']]
     },
 
 
@@ -473,7 +463,6 @@ Chipmunk <- R6::R6Class(
     poly_verts     = NULL,
     poly_count     = NULL,
 
-    static_segments_df = NULL,
     static_segments    = NULL
   )
 )
