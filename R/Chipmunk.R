@@ -1,7 +1,9 @@
 
 
-valid_shapes <- c('segment', 'circle', 'box', 'polygon',
-                  'static_segment', 'static_circle', 'static_box', 'static_polygon')
+dynamic_shapes <- c('segment', 'circle', 'box', 'polygon')
+static_shapes  <- c('static_segment', 'static_circle', 'static_box', 'static_polygon')
+valid_shapes <- c(dynamic_shapes, static_shapes)
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Chipmunk class
@@ -49,14 +51,40 @@ Chipmunk <- R6::R6Class(
     #' @param elasticity Range [0, 1]
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     add_shape = function(type, shape, friction, elasticity) {
+      stopifnot(type %in% c(valid_shapes))
+
       cpShapeSetFriction(shape, friction)
       cpShapeSetElasticity(shape, elasticity)
       cpSpaceAddShape(private$space, shape)
 
-      stopifnot(type %in% c(valid_shapes))
-
       private$shape[[type]] <- append(private$shape[[type]], shape)
+
+      invisible(self)
     },
+
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #' Add a body of the given type
+    #'
+    #' @param type character name of type. must be a dynamic type
+    #' @param body body to add. type = cpBody
+    #' @param x,y initial body location
+    #' @param vx,vy initial body velocity
+    #' @param angular_velocity default: 0  degrees/second
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    add_body = function(type, body, x, y, vx, vy, angular_velocity) {
+      stopifnot(type %in% c(dynamic_shapes))
+
+      cpBodySetPosition(body, cpv(x, y))
+      cpBodySetVelocity(body, cpv(vx, vy))
+      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
+      cpSpaceAddBody(private$space, body)
+
+      private$body[[type]] <- append(private$body[[type]], body)
+
+      invisible(self)
+    },
+
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Add a static segment
@@ -114,20 +142,26 @@ Chipmunk <- R6::R6Class(
 
       moment                <- cpMomentForCircle(mass, 0, radius, cpv(0, 0))
       body                  <- cpBodyNew(mass, moment);
-      private$circle_bodies <- append(private$circle_bodies, body)
-      cpBodySetPosition(body, cpv(x, y))
-      cpBodySetVelocity(body, cpv(vx, vy))
-      cpSpaceAddBody(private$space, body)
-      cpBodySetAngularVelocity(body, angular_velocity * pi/180)
+      # private$circle_bodies <- append(private$circle_bodies, body)
+
+      self$add_body('circle', body, x = x, y = y, vx = vx, vy = vy,
+                    angular_velocity = angular_velocity)
+
+      # cpBodySetPosition(body, cpv(x, y))
+      # cpBodySetVelocity(body, cpv(vx, vy))
+      # cpSpaceAddBody(private$space, body)
+      # cpBodySetAngularVelocity(body, angular_velocity * pi/180)
 
 
-      shape = cpCircleShapeNew(body, radius, cpv(0, 0));
-      cpShapeSetFriction(shape, friction)
-      cpShapeSetElasticity(shape, elasticity)
-      cpSpaceAddShape(private$space, shape)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create shape and add to space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      shape <- cpCircleShapeNew(body, radius, cpv(0, 0));
+      self$add_shape('circle', shape, friction = friction, elasticity = elasticity);
 
-      private$circle_shapes <- append(private$circle_shapes, shape)
-
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Store meta info about shape
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       private$circle_radii <- c(private$circle_radii, radius)
 
 
@@ -141,10 +175,12 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_circles = function() {
 
-      xs <- numeric(length(private$circle_bodies))
-      ys <- numeric(length(private$circle_bodies))
-      for (i in seq_along(private$circle_bodies)) {
-        body  <- private$circle_bodies[[i]]
+      bodies <- private$body[['circle']]
+
+      xs <- numeric(length(bodies))
+      ys <- numeric(length(bodies))
+      for (i in seq_along(bodies)) {
+        body  <- bodies[[i]]
         pos   <- cpBodyGetPosition(body)
         pos   <- as.list(pos)
         xs[i] <- pos$x
@@ -182,12 +218,15 @@ Chipmunk <- R6::R6Class(
       cpBodySetAngularVelocity(body, angular_velocity * pi/180)
 
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create shape and add to space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       shape <- cpBoxShapeNew(body, width, height, radius)
-      cpShapeSetFriction(shape, friction)
-      cpShapeSetElasticity(shape, elasticity)
-      cpSpaceAddShape(private$space, shape)
+      self$add_shape('box', shape, friction = friction, elasticity = elasticity);
 
-      private$box_shapes <- append(private$box_shapes, shape)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Store meta info about shape
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       private$box_widths <- c(private$box_widths , width )
       private$box_heights<- c(private$box_heights, height)
 
@@ -311,6 +350,9 @@ Chipmunk <- R6::R6Class(
       cpBodySetAngularVelocity(body, angular_velocity * pi/180)
 
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create shape and add to space
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       shape <- cpPolyShapeNew(
         body      = body,
         count     = length(xs),
@@ -318,14 +360,14 @@ Chipmunk <- R6::R6Class(
         transform = cpTransformIdentity(),
         radius    = radius
       )
-      cpShapeSetFriction(shape, friction)
-      cpShapeSetElasticity(shape, elasticity)
-      cpSpaceAddShape(private$space, shape)
+      self$add_shape('polygon', shape, friction = friction, elasticity = elasticity);
 
-      private$poly_shapes <- append(private$poly_shapes, shape)
 
       private$poly_count <- private$poly_count + 1L
 
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Store meta info about shape
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # inefficent accumulation of polygons. fixme.
       private$poly_verts <- rbind(
         private$poly_verts,
@@ -411,46 +453,11 @@ Chipmunk <- R6::R6Class(
     space          = NULL,
     time_step      = NULL,
 
-    body = list(
-      segment = list(),
-      circle  = list(),
-      box     = list(),
-      polygon = list(),
-
-      static_segment = list(),
-      static_circle  = list(),
-      static_box     = list(),
-      static_polygon = list()
-    ),
-
-    shape = list(
-      segment = list(),
-      circle  = list(),
-      box     = list(),
-      polygon = list(),
-
-      static_segment = list(),
-      static_circle  = list(),
-      static_box     = list(),
-      static_polygon = list()
-    ),
-
-    df = list(
-      segment = list(),
-      circle  = list(),
-      box     = list(),
-      polygon = list(),
-
-      static_segment = list(),
-      static_circle  = list(),
-      static_box     = list(),
-      static_polygon = list()
-    ),
+    body           = list(),
+    shape          = list(),
+    df             = list(),
 
 
-
-    circle_bodies  = NULL,
-    circle_shapes  = NULL,
     circle_radii   = NULL,
 
     box_bodies     = NULL,

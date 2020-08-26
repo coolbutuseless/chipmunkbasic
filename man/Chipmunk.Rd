@@ -13,6 +13,7 @@ Chipmunk class
 \itemize{
 \item \href{#method-new}{\code{Chipmunk$new()}}
 \item \href{#method-add_shape}{\code{Chipmunk$add_shape()}}
+\item \href{#method-add_body}{\code{Chipmunk$add_body()}}
 \item \href{#method-add_static_segment}{\code{Chipmunk$add_static_segment()}}
 \item \href{#method-get_static_segments}{\code{Chipmunk$get_static_segments()}}
 \item \href{#method-add_circle}{\code{Chipmunk$add_circle()}}
@@ -66,6 +67,31 @@ Add a shape of the given type}
 \item{\code{friction}}{friction along segment. range [0, 1]}
 
 \item{\code{elasticity}}{Range [0, 1]
+Add a body of the given type}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-add_body"></a>}}
+\if{latex}{\out{\hypertarget{method-add_body}{}}}
+\subsection{Method \code{add_body()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_body(type, body, x, y, vx, vy, angular_velocity)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{character name of type. must be a dynamic type}
+
+\item{\code{body}}{body to add. type = cpBody}
+
+\item{\code{x, y}}{initial body location}
+
+\item{\code{vx, vy}}{initial body velocity}
+
+\item{\code{angular_velocity}}{default: 0  degrees/second
 Add a static segment}
 }
 \if{html}{\out{</div>}}
