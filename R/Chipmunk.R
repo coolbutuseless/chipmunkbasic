@@ -23,10 +23,11 @@ Chipmunk <- R6::R6Class(
     #'        Default: 0.01
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     initialize = function(gravity = cpv(0, -100), time_step = 0.01) {
+
+      private$time_step = time_step
       private$space <- cpSpaceNew()
       cpSpaceSetGravity(private$space, gravity)
 
-      private$time_step = time_step
 
       private$static_segments <- list()
 
@@ -47,27 +48,52 @@ Chipmunk <- R6::R6Class(
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #' Add a shape of the given type
+    #'
+    #' @param type one of segment, circle, box, polygon and static variants
+    #' @param shape the cmShape ExternalPointer
+    #' @param friction friction along segment. range [0, 1]
+    #' @param elasticity Range [0, 1]
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    add_shape = function(type, shape, friction, elasticity) {
+      cpShapeSetFriction(shape, friction)
+      cpShapeSetElasticity(shape, elasticity)
+      cpSpaceAddShape(private$space, shape)
+
+      stopifnot(type %in% c(
+        'segment', 'circle', 'box', 'polygon',
+        'static_segment', 'static_circle', 'static_box', 'static_polygon'
+      ))
+
+      private$shape[[type]] <- append(private$shape[[type]], shape)
+    },
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Add a static segment
     #'
     #' @param x1,y1,x2,y2 segment end points
-    #' @param friction friction along ground. default 1.
-    #' @param elasticity default: 0 (no bounce)
+    #' @param friction friction along segment. default 1. range [0, 1]
+    #' @param elasticity default: 0 (no bounce). Range [0, 1]
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     add_static_segment = function(x1, y1, x2, y2, friction = 1, elasticity = 0) {
 
-      private$static_segments_df <- rbind(
-        private$static_segments_df,
-        data.frame(x1, y1, x2, y2, friction)
-      )
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Static shapes are added to the space static body
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      body <- cpSpaceGetStaticBody(private$space)
 
-      static_body <- cpSpaceGetStaticBody(private$space)
-      static_segment <- cpSegmentShapeNew(static_body, cpv(x1, y1), cpv(x2, y2), 0)
-      cpShapeSetFriction(static_segment, friction)
-      cpShapeSetElasticity(static_segment, elasticity = elasticity)
-      cpSpaceAddShape(private$space, static_segment)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Create a shape
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      shape <- cpSegmentShapeNew(body, cpv(x1, y1), cpv(x2, y2), 0)
+      self$add_shape('segment', shape, friction = friction, elasticity = elasticity)
 
-      private$static_segments <- append(private$static_segments, static_segment)
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Store segment information
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      this_info <- data.frame(x1, y1, x2, y2)
 
+      private$df[['segment']] <- rbind(private$df[['segment']], this_info)
 
       invisible(self)
     },
@@ -395,6 +421,44 @@ Chipmunk <- R6::R6Class(
     space          = NULL,
     time_step      = NULL,
 
+    body = list(
+      segment = list(),
+      circle  = list(),
+      box     = list(),
+      polygon = list(),
+
+      static_segment = list(),
+      static_circle  = list(),
+      static_box     = list(),
+      static_polygon = list()
+    ),
+
+    shape = list(
+      segment = list(),
+      circle  = list(),
+      box     = list(),
+      polygon = list(),
+
+      static_segment = list(),
+      static_circle  = list(),
+      static_box     = list(),
+      static_polygon = list()
+    ),
+
+    df = list(
+      segment = list(),
+      circle  = list(),
+      box     = list(),
+      polygon = list(),
+
+      static_segment = list(),
+      static_circle  = list(),
+      static_box     = list(),
+      static_polygon = list()
+    ),
+
+
+
     circle_bodies  = NULL,
     circle_shapes  = NULL,
     circle_radii   = NULL,
@@ -404,10 +468,10 @@ Chipmunk <- R6::R6Class(
     box_widths     = NULL,
     box_heights    = NULL,
 
-    poly_bodies = NULL,
-    poly_shapes = NULL,
-    poly_verts  = NULL,
-    poly_count  = NULL,
+    poly_bodies    = NULL,
+    poly_shapes    = NULL,
+    poly_verts     = NULL,
+    poly_count     = NULL,
 
     static_segments_df = NULL,
     static_segments    = NULL
