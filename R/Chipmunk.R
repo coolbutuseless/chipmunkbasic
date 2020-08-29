@@ -427,6 +427,14 @@ Chipmunk <- R6::R6Class(
 
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #' @description Advanced: Get the list of Chipmunk \code{cpBody} objects
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    get_bodies = function() {
+      private$body
+    },
+
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #' Advance the simulation by N timesteps
     #'
     #' @param N number of time steps to advance
@@ -445,12 +453,10 @@ Chipmunk <- R6::R6Class(
 
   private = list(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # @field space the chipmunk simulation space. Make private.
-    # @field segments segments added by the user. Make private.
-    # @field ground_objects master list of ground objects. Make private.
-    # @field body list of all body
-    # @field shape list of shapes assigned to each body
+    # @field space the chipmunk simulation space.
     # @field time_step simulation time_step
+    # @field body named list of lists of all bodies by type
+    # @field shape named list of lists of all shapes by type
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     space          = NULL,
     time_step      = NULL,

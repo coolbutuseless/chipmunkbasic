@@ -23,6 +23,7 @@ Chipmunk class
 \item \href{#method-get_boxes_as_polygons}{\code{Chipmunk$get_boxes_as_polygons()}}
 \item \href{#method-add_polygon}{\code{Chipmunk$add_polygon()}}
 \item \href{#method-get_polygons}{\code{Chipmunk$get_polygons()}}
+\item \href{#method-get_bodies}{\code{Chipmunk$get_bodies()}}
 \item \href{#method-advance}{\code{Chipmunk$advance()}}
 \item \href{#method-clone}{\code{Chipmunk$clone()}}
 }
@@ -298,9 +299,19 @@ Add a convex hull polygon to the space
 \if{latex}{\out{\hypertarget{method-get_polygons}{}}}
 \subsection{Method \code{get_polygons()}}{
 Get the location of all the polygons
-Advance the simulation by N timesteps
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_polygons()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_bodies"></a>}}
+\if{latex}{\out{\hypertarget{method-get_bodies}{}}}
+\subsection{Method \code{get_bodies()}}{
+Advanced: Get the list of Chipmunk \code{cpBody} objects
+Advance the simulation by N timesteps
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_bodies()}\if{html}{\out{</div>}}
 }
 
 }
