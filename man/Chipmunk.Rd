@@ -24,6 +24,7 @@ Chipmunk class
 \item \href{#method-add_polygon}{\code{Chipmunk$add_polygon()}}
 \item \href{#method-get_polygons}{\code{Chipmunk$get_polygons()}}
 \item \href{#method-get_bodies}{\code{Chipmunk$get_bodies()}}
+\item \href{#method-get_body_states}{\code{Chipmunk$get_body_states()}}
 \item \href{#method-advance}{\code{Chipmunk$advance()}}
 \item \href{#method-clone}{\code{Chipmunk$clone()}}
 }
@@ -309,11 +310,28 @@ Get the location of all the polygons
 \if{latex}{\out{\hypertarget{method-get_bodies}{}}}
 \subsection{Method \code{get_bodies()}}{
 Advanced: Get the list of Chipmunk \code{cpBody} objects
-Advance the simulation by N timesteps
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_bodies()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_body_states"></a>}}
+\if{latex}{\out{\hypertarget{method-get_body_states}{}}}
+\subsection{Method \code{get_body_states()}}{
+Advanced: Get state of \code{cpBody} objects as data.frame
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_body_states(type)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{cpbody type one of \code{c('segment', 'circle', 'box', 'polygon')}
+Advance the simulation by N timesteps}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-advance"></a>}}

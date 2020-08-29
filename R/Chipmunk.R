@@ -174,19 +174,10 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_circles = function() {
 
-      bodies <- private$body[['circle']]
+      res <- self$get_body_states('circle')
+      res$r <- private$circle_radii
 
-      xs <- numeric(length(bodies))
-      ys <- numeric(length(bodies))
-      for (i in seq_along(bodies)) {
-        body  <- bodies[[i]]
-        pos   <- cpBodyGetPosition(body)
-        pos   <- as.list(pos)
-        xs[i] <- pos$x
-        ys[i] <- pos$y
-      }
-
-      data.frame(idx = seq_along(xs), x = xs, y = ys, r = private$circle_radii)
+      res
     },
 
 
@@ -431,6 +422,19 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_bodies = function() {
       private$body
+    },
+
+
+
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #' @description Advanced: Get state of \code{cpBody} objects as data.frame
+    #'
+    #' @param type cpbody type one of \code{c('segment', 'circle', 'box', 'polygon')}
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    get_body_states = function(type) {
+      stopifnot(type %in% dynamic_shapes)
+      bodies <- private$body[[type]]
+      chipmunkcore::get_body_state(bodies)
     },
 
 
