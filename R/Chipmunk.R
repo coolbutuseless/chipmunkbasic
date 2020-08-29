@@ -232,29 +232,11 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_boxes = function() {
 
-      bodies <- private$body[['box']]
+      res <- self$get_body_states('box')
+      res$width  <- private$box_widths
+      res$height <- private$box_heights
 
-      xs <- numeric(length(bodies))
-      ys <- numeric(length(bodies))
-      rs <- numeric(length(bodies))
-
-      for (i in seq_along(bodies)) {
-        body  <- bodies[[i]]
-        pos   <- cpBodyGetPosition(body)
-        pos   <- as.list(pos)
-        xs[i] <- pos$x
-        ys[i] <- pos$y
-        rs[i] <- cpBodyGetAngle(body)
-      }
-
-      data.frame(
-        idx    = seq_along(xs),
-        x      = xs,
-        y      = ys,
-        angle  = rs,
-        width  = private$box_widths,
-        height = private$box_heights
-      )
+      res
     },
 
 
@@ -264,30 +246,28 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_boxes_as_polygons = function() {
 
-      box_centroids <- cm$get_boxes()
-
-      box_centroids$xc <- box_centroids$x
-      box_centroids$yc <- box_centroids$y
+      box_centroids <- self$get_boxes()
 
       box_vertices <- rbind(
-        transform(box_centroids, vertex = 1, x = -width/2, y = -height/2),
-        transform(box_centroids, vertex = 2, x =  width/2, y = -height/2),
-        transform(box_centroids, vertex = 3, x =  width/2, y =  height/2),
-        transform(box_centroids, vertex = 4, x = -width/2, y =  height/2)
+        transform(box_centroids, vertex = 1, xvertex = -width/2, yvertex = -height/2),
+        transform(box_centroids, vertex = 2, xvertex =  width/2, yvertex = -height/2),
+        transform(box_centroids, vertex = 3, xvertex =  width/2, yvertex =  height/2),
+        transform(box_centroids, vertex = 4, xvertex = -width/2, yvertex =  height/2)
       )
 
-      box_vertices <- box_vertices[, c('idx', 'vertex', 'xc', 'yc', 'x', 'y', 'angle')]
+      box_vertices$width  <- NULL
+      box_vertices$height <- NULL
+
       box_vertices <- box_vertices[with(box_vertices,order(idx, vertex)),]
 
       polys <- transform(
         box_vertices,
-        x1 = x * cos(angle) - y * sin(angle) + xc,
-        y  = x * sin(angle) + y * cos(angle) + yc
+        xvertex1 = xvertex * cos(theta) - yvertex * sin(theta) + x,
+        yvertex  = xvertex * sin(theta) + yvertex * cos(theta) + y
       )
 
-      polys$x <- polys$x1
-
-      polys <- polys[, c('idx', 'vertex', 'x', 'y')]
+      polys$xvertex  <- polys$xvertex1
+      polys$xvertex1 <- NULL
 
       polys
     },
@@ -363,10 +343,10 @@ Chipmunk <- R6::R6Class(
       private$poly_verts <- rbind(
         private$poly_verts,
         data.frame(
-          x      = xs,
-          y      = ys,
-          idx    = private$poly_count,
-          vertex = seq_along(xs)
+          xvertex = xs,
+          yvertex = ys,
+          idx     = private$poly_count,
+          vertex  = seq_along(xs)
         )
       )
 
@@ -379,39 +359,18 @@ Chipmunk <- R6::R6Class(
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     get_polygons = function() {
 
-      bodies <- private$body[['polygon']]
+      res <- self$get_body_states('polygon')
 
-      xs <- numeric(length(bodies))
-      ys <- numeric(length(bodies))
-      rs <- numeric(length(bodies))
-
-      for (i in seq_along(bodies)) {
-        body  <- bodies[[i]]
-        pos   <- cpBodyGetPosition(body)
-        pos   <- as.list(pos)
-        xs[i] <- pos$x
-        ys[i] <- pos$y
-        rs[i] <- cpBodyGetAngle(body)
-      }
-
-      poly_centroids <- data.frame(
-        idx    = seq_along(xs),
-        xc     = xs,
-        yc     = ys,
-        angle  = rs
-      )
-
-      polys <- merge(poly_centroids, private$poly_verts)
+      polys <- merge(res, private$poly_verts)
 
       polys <- transform(
         polys,
-        x1 = x * cos(angle) - y * sin(angle) + xc,
-        y  = x * sin(angle) + y * cos(angle) + yc
+        xvertex1 = xvertex * cos(theta) - yvertex * sin(theta) + x,
+        yvertex  = xvertex * sin(theta) + yvertex * cos(theta) + y
       )
 
-      polys$x <- polys$x1
-
-      polys <- polys[, c('idx', 'vertex', 'x', 'y')]
+      polys$xvertex <- polys$xvertex1
+      polys$xvertex1 <- NULL
 
       polys
     },

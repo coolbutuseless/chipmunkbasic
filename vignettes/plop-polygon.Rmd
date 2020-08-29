@@ -99,11 +99,13 @@ cm$add_polygon(
 
 
 ```{r eval = FALSE}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Clear out the target directory for all the frames
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-unlink(list.files("vignettes/png", "*.png", full.names = TRUE))
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Prepare the directory for output images
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+root_dir <- here::here("vignettes/")
+png_dir  <- file.path(root_dir, "png")
+unlink(list.files(png_dir, pattern = "*.png", full.names = TRUE))
 
 steps <- 600; advance <-  6
 # steps <-  60; advance <- 60
@@ -129,7 +131,7 @@ for (i in seq_len(steps)) {
   
   p <- ggplot() + 
     geom_point(data = circles, aes(x, y, size = I(2.845*r)), colour = 'black') + 
-    geom_polygon(data = polys , aes(x, y), fill = '#445566') +
+    geom_polygon(data = polys , aes(xvertex, yvertex), fill = '#445566') +
     geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2), colour = 'lightblue') + 
     coord_fixed(xlim = c(-70, 70), ylim = c(0, 100)) + 
     theme_void() +
@@ -141,10 +143,22 @@ for (i in seq_len(steps)) {
 }
 
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ffmpeg - create mp4 from PNG files
+# ffmpeg/gifsicle to create animations
+#  - create mp4 from PNG files (use in vignettes)
+#  - create gif from mp4 (use in github readme)
+#  - simplify gif with gifsicle
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-system("ffmpeg -y -framerate 30 -pattern_type glob -i 'vignettes/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 vignettes/anim/plop-polygon.mp4")
+root_name <- "plop-polygon"
+mp4_name  <- paste0(root_dir, "/anim/", root_name, ".mp4")
+tmp_name  <- tempfile(fileext = ".gif")
+gif_name  <- paste0(root_dir, "/anim/", root_name, ".gif")
+
+system(glue::glue("ffmpeg -y -framerate 20 -pattern_type glob -i '{png_dir}/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 '{mp4_name}'"))
+# system(glue::glue("ffmpeg -y -i '{mp4_name}' -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' '{tmp_name}'"))
+
+# system(glue::glue("gifsicle -O99 -o '{gif_name}' -k 128 '{tmp_name}'"))
 
 ```
 
