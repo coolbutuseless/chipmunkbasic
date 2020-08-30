@@ -1,7 +1,7 @@
 Package: chipmunkbasic
 Type: Package
 Title: R6 Interface to Chipmunk2d Physics Library
-Version: 0.1.1
+Version: 0.1.2
 Author: mikefc
 Maintainer: mikefc <mikefc@coolbutuseless.com>
 Description: R6 interface to chipmunk2d physics library.
