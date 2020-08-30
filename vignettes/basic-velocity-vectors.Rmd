@@ -1,8 +1,8 @@
 ---
-title: "Basic Boxes"
+title: "Velocity Vectors"
 output: html_document
 vignette: >
-  %\VignetteIndexEntry{Basic Boxes}
+  %\VignetteIndexEntry{Velocity Vectors}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,7 +19,8 @@ library(ggplot2)
 ```
 
 
-## Boxes example
+## Basic `Chipmunk`
+
 
 
 ```{r setup}
@@ -32,10 +33,12 @@ set.seed(1)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 cm <- Chipmunk$new()
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Add fixed segments
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cm$add_static_segment(-70, 0, 70, 0)
+cm$add_static_segment(-20, 10, -5, 0)
+cm$add_static_segment( 20, 10,  5, 0)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Fetch all the segments. Use for plotting
@@ -43,50 +46,66 @@ cm$add_static_segment(-70, 0, 70, 0)
 segments_df <- cm$get_static_segments()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Add some boxes
+# Add some circles 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-for (i in 1:30) {
-  cm$add_box(
-    x      = runif(1, -20, 20), 
-    y      = runif(1,  10, 50),
-    width  = runif(1, 2, 10), 
-    height = runif(1, 2, 10),
-    angle  = runif(1, 0, 45)
+for (i in 1:10) {
+  cm$add_circle(
+    x = runif(1, -20, 20), 
+    y = runif(1,  10, 50),
+    vx = 10 * rnorm(1),
+    vy = 10 * rnorm(1)
   )
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# The raw box form is width height and angle of rotation.  However
-# this isn't very handy for plotting with ggplot
+# Get the current positions of the circles as a data.frame
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-boxes <- cm$get_boxes()
-head(boxes, 10)
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Get the boxes as a list of vertices. This is ideal for 
-# ggplot::geom_polygon()
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-boxes <- cm$get_boxes_as_polygons()
-head(boxes, 8)
+circles <- cm$get_circles()
+circles
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Advance the simulation
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cm$advance(40)
+cm$advance(10)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Show me the circles in their new locations
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+circles <- cm$get_circles()
+circles
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot everything
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ggplot(boxes) + 
-  geom_polygon(aes(xvertex, yvertex, group = idx, fill = as.factor(idx))) + 
+ggplot(circles) + 
+  geom_point(aes(x, y), size = 5, colour = "grey80") + 
   geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2)) + 
-  coord_fixed() + 
-  theme_void() + 
+  coord_fixed(xlim=c(-25, 25), ylim = c(0, 50)) + 
+  theme_minimal() + 
+  theme(legend.position = 'none')
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Advance the simulation
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cm$advance(10)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Show me the circles in their new locations
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+circles <- cm$get_circles()
+circles
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot everything
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ggplot(circles) + 
+  geom_point(aes(x, y), size = 5, colour = "grey80") + 
+  geom_segment(aes(x = x, y = y, xend = x + 0.1 * vx, yend = y + 0.1 * vy), arrow = arrow(angle = 15, length = unit(0.1, 'inches'))) + 
+  geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2)) + 
+  coord_fixed(xlim=c(-25, 25), ylim = c(0, 50)) + 
+  theme_minimal() + 
   theme(legend.position = 'none')
 ```
-
-
-
 
 
 
@@ -106,25 +125,24 @@ unlink(list.files(png_dir, pattern = "*.png", full.names = TRUE))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate animation frames
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-for (i in seq_len(100)) {
+for (i in seq_len(85)) {
+  cm$advance(2)
   
   if (i %% 10 == 0) message(i)
   
-  cm$advance(3)
+  circles <- cm$get_circles()
   
-  boxes <- cm$get_boxes_as_polygons()
-  
-  p <- ggplot(boxes) + 
-    geom_polygon(aes(xvertex, yvertex, group = idx, fill = as.factor(idx))) + 
-    geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2)) + 
-    theme_minimal() + 
-    theme(legend.position = 'none') + 
-    coord_fixed(xlim = c(-50, 50), ylim = c(0, 50)) 
+  p <- ggplot(circles) + 
+  geom_point(aes(x, y), size = 5, colour = "grey80") + 
+  geom_segment(aes(x = x, y = y, xend = x + 0.1 * vx, yend = y + 0.1 * vy), arrow = arrow(angle = 15, length = unit(0.1, 'inches'))) +
+  geom_segment(data = segments_df, aes(x = x1, y = y1, xend = x2, yend = y2)) + 
+  coord_fixed(xlim=c(-25, 25), ylim = c(-15, 50)) + 
+  theme_minimal() + 
+  theme(legend.position = 'none')
   
   outfile <- sprintf("vignettes/png/%04i.png", i)
   ggsave(outfile, p, width = 7, height = 7)
 }
-
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ffmpeg/gifsicle to create animations
@@ -132,7 +150,7 @@ for (i in seq_len(100)) {
 #  - create gif from mp4 (use in github readme)
 #  - simplify gif with gifsicle
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-root_name <- "boxes"
+root_name <- "velocity-vectors"
 mp4_name  <- paste0(root_dir, "/anim/", root_name, ".mp4")
 tmp_name  <- tempfile(fileext = ".gif")
 gif_name  <- paste0(root_dir, "/anim/", root_name, ".gif")
@@ -147,7 +165,9 @@ system(glue::glue("ffmpeg -y -framerate 20 -pattern_type glob -i '{png_dir}/*.pn
 
 
 
-![](anim/boxes.mp4)
+![](anim/velocity-vectors.mp4)
+
+
 
 
 

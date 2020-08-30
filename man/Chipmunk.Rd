@@ -12,6 +12,8 @@ Chipmunk class
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{Chipmunk$new()}}
+\item \href{#method-add_shape}{\code{Chipmunk$add_shape()}}
+\item \href{#method-add_body}{\code{Chipmunk$add_body()}}
 \item \href{#method-add_static_segment}{\code{Chipmunk$add_static_segment()}}
 \item \href{#method-get_static_segments}{\code{Chipmunk$get_static_segments()}}
 \item \href{#method-add_circle}{\code{Chipmunk$add_circle()}}
@@ -21,6 +23,8 @@ Chipmunk class
 \item \href{#method-get_boxes_as_polygons}{\code{Chipmunk$get_boxes_as_polygons()}}
 \item \href{#method-add_polygon}{\code{Chipmunk$add_polygon()}}
 \item \href{#method-get_polygons}{\code{Chipmunk$get_polygons()}}
+\item \href{#method-get_bodies}{\code{Chipmunk$get_bodies()}}
+\item \href{#method-get_body_states}{\code{Chipmunk$get_body_states()}}
 \item \href{#method-advance}{\code{Chipmunk$advance()}}
 \item \href{#method-clone}{\code{Chipmunk$clone()}}
 }
@@ -42,6 +46,56 @@ of gravity. Default: \code{cpv(0, -100)}}
 
 \item{\code{time_step}}{simulation step size. smaller is more accurate.
        Default: 0.01
+Add a shape of the given type}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-add_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-add_shape}{}}}
+\subsection{Method \code{add_shape()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_shape(type, shape, friction, elasticity)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{one of segment, circle, box, polygon and static variants}
+
+\item{\code{shape}}{the cmShape ExternalPointer}
+
+\item{\code{friction}}{friction along segment. range [0, 1]}
+
+\item{\code{elasticity}}{Range [0, 1]
+Add a body of the given type}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-add_body"></a>}}
+\if{latex}{\out{\hypertarget{method-add_body}{}}}
+\subsection{Method \code{add_body()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$add_body(type, body, x, y, vx, vy, angle, angular_velocity)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{character name of type. must be a dynamic type}
+
+\item{\code{body}}{body to add. type = cpBody}
+
+\item{\code{x, y}}{initial body location}
+
+\item{\code{vx, vy}}{initial body velocity}
+
+\item{\code{angle}}{orientation angle in degrees}
+
+\item{\code{angular_velocity}}{default: 0  degrees/second
 Add a static segment}
 }
 \if{html}{\out{</div>}}
@@ -60,9 +114,9 @@ Add a static segment}
 \describe{
 \item{\code{x1, y1, x2, y2}}{segment end points}
 
-\item{\code{friction}}{friction along ground. default 1.}
+\item{\code{friction}}{friction along segment. default 1. range [0, 1]}
 
-\item{\code{elasticity}}{default: 0 (no bounce)}
+\item{\code{elasticity}}{default: 0 (no bounce). Range [0, 1]}
 }
 \if{html}{\out{</div>}}
 }
@@ -246,11 +300,38 @@ Add a convex hull polygon to the space
 \if{latex}{\out{\hypertarget{method-get_polygons}{}}}
 \subsection{Method \code{get_polygons()}}{
 Get the location of all the polygons
-Advance the simulation by N timesteps
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_polygons()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_bodies"></a>}}
+\if{latex}{\out{\hypertarget{method-get_bodies}{}}}
+\subsection{Method \code{get_bodies()}}{
+Advanced: Get the list of Chipmunk \code{cpBody} objects
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_bodies()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_body_states"></a>}}
+\if{latex}{\out{\hypertarget{method-get_body_states}{}}}
+\subsection{Method \code{get_body_states()}}{
+Advanced: Get state of \code{cpBody} objects as data.frame
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chipmunk$get_body_states(type)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{cpbody type one of \code{c('segment', 'circle', 'box', 'polygon')}
+Advance the simulation by N timesteps}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-advance"></a>}}

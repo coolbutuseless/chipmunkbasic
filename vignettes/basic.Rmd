@@ -120,8 +120,17 @@ ggplot(circles) +
 
 ```{r eval=FALSE, echo=FALSE}
 
-unlink(list.files("vignettes/png", "*.png", full.names = TRUE))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Prepare the directory for output images
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+root_dir <- here::here("vignettes")
+png_dir  <- file.path(root_dir, "png")
+unlink(list.files(png_dir, pattern = "*.png", full.names = TRUE))
 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# generate animation frames
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 for (i in seq_len(75)) {
   cm$advance(2)
   
@@ -140,12 +149,21 @@ for (i in seq_len(75)) {
   ggsave(outfile, p, width = 7, height = 7)
 }
 
-system("ffmpeg -y -framerate 30 -pattern_type glob -i 'vignettes/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 vignettes/anim/circles.mp4")
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ffmpeg/gifsicle to create animations
+#  - create mp4 from PNG files (use in vignettes)
+#  - create gif from mp4 (use in github readme)
+#  - simplify gif with gifsicle
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+root_name <- "circles"
+mp4_name  <- paste0(root_dir, "/anim/", root_name, ".mp4")
+tmp_name  <- tempfile(fileext = ".gif")
+gif_name  <- paste0(root_dir, "/anim/", root_name, ".gif")
 
-# mp4 to gif
-# ffmpeg -i galton.mp4 -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' out.gif
+system(glue::glue("ffmpeg -y -framerate 20 -pattern_type glob -i '{png_dir}/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 '{mp4_name}'"))
+# system(glue::glue("ffmpeg -y -i '{mp4_name}' -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' '{tmp_name}'"))
 
-# gifsicle -O99 -o out2.gif -k 16 out.gif
+# system(glue::glue("gifsicle -O99 -o '{gif_name}' -k 128 '{tmp_name}'"))
 ```
 
 
