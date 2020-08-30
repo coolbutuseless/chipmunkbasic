@@ -6,6 +6,7 @@
   `get_polygons()`, `get_boxes()` and `get_boxes_as_polygons()`
 * Feature (advanced): add `$get_bodies()` so that user can do extra processing
   using `{chipmunkcore}`
+* Vignette: Added "Velocity Vector" vignette
 * Internal: Refactor of internal datastructures
 
 # chipmunkbasic 0.1.1
