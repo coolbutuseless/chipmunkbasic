@@ -24,12 +24,12 @@ else
 
 ## Chipmunk2d
 
-  - [Chipmunk2d](http://chipmunk-physics.net/) is a C library for
+-   [Chipmunk2d](http://chipmunk-physics.net/) is a C library for
     simulating rigid body physics
-  - [chipmunkcore](https://coolbutuseless.github.io/package/chipmunkcore)
+-   [chipmunkcore](https://coolbutuseless.github.io/package/chipmunkcore)
     is a very low-level wrapper around the C library, providing 1-to-1
     mapping between R functions and the core C library
-  - [chipmunkbasic](https://coolbutuseless.github.io/package/chipmunkbasic)
+-   [chipmunkbasic](https://coolbutuseless.github.io/package/chipmunkbasic)
     provides a nicer wrapper around `chipmunkcore`
 
 <img src="man/figures/chipmunk-overview.png" width="50%" />
@@ -54,42 +54,46 @@ remotes::install_github('coolbutuseless/chipmunkbasic')
 
 ## Vignettes
 
-  - [Basic
+-   [Basic
     Circles](https://coolbutuseless.github.io/package/chipmunkbasic/articles/basic.html)
     shows how circles can be added to a scene
-  - [Basic
+-   [Basic
     Boxes](https://coolbutuseless.github.io/package/chipmunkbasic/articles/basic-boxes.html)
     shows how boxes can be added to a scene and rendered in ggplot
-  - [Galton
+-   [Galton
     board](https://coolbutuseless.github.io/package/chipmunkbasic/articles/galton.html)
-  - [Plop](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plot.html)
+-   [Plop](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plop.html)
     shows a large bowling ball being projected into a bucket of elastic
     circles
-  - [Plop
-    (polygon)](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plot-polygon.html)
+-   [Plop
+    (polygon)](https://coolbutuseless.github.io/package/chipmunkbasic/articles/plop-polygon.html)
     shows a large triangle (with initial angular velocity) being
     projected into a bucket of elastic circles
-  - [Inevitable
+-   [Inevitable
     Destruction](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction.html)
     shows a bowling ball destroying a tower of blocks
-  - [Inevitable
-    Destruction 2](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction-two.html)
+-   [Inevitable Destruction
+    2](https://coolbutuseless.github.io/package/chipmunkbasic/articles/destruction-two.html)
     more gratuitous destruction
 
 ## ToDo
 
-  - Add constraints and joints
+-   Add constraints and joints
 
 ## Galton Board
 
 For full code, see the
 [vignette](https://coolbutuseless.github.io/package/chipmunkbasic/articles/galton.html)
 
+Thanks to [Esteban Moro](https://twitter.com/estebanmoro) for
+fine-tuning this simulation, and contributing his changes.
+
 ![](man/figures/galton.gif)
 
 ## A simple simulation
 
 ``` r
+# library(chipmunkcore)
 library(chipmunkbasic)
 library(ggplot2)
 set.seed(1)
@@ -129,6 +133,13 @@ circles <- cm$get_circles()
 circles
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Prepare the directory for output images
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+root_dir <- here::here("man/figures/")
+png_dir  <- file.path(root_dir, "png")
+unlink(list.files(png_dir, pattern = "*.png", full.names = TRUE))
+
 
 for (frame in 1:45) {
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,12 +167,31 @@ for (frame in 1:45) {
   
   ggsave(sprintf("man/figures/png/%04i.png", frame), p, width = 6, height = 6)
 }
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ffmpeg/gifsicle to create animations
+#  - create mp4 from PNG files (use in vignettes)
+#  - create gif from mp4 (use in github readme)
+#  - simplify gif with gifsicle
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+root_name <- "simple"
+mp4_name  <- paste0(root_dir, "/", root_name, ".mp4")
+tmp_name  <- tempfile(fileext = ".gif")
+gif_name  <- paste0(root_dir, "/", root_name, ".gif")
+
+system(glue::glue("ffmpeg -y -framerate 10 -pattern_type glob -i 'man/figures/png/*.png' -c:v libx264 -pix_fmt yuv420p -s 800x800 '{mp4_name}'"))
+system(glue::glue("ffmpeg -y -i '{mp4_name}' -filter_complex 'fps=30,scale=800:-1:flags=lanczos,split [o1] [o2];[o1] palettegen [p]; [o2] fifo [o3];[o3] [p] paletteuse' '{tmp_name}'"))
+
+system(glue::glue("gifsicle -O99 -o '{gif_name}' -k 128 '{tmp_name}'"))
+
+unlink(mp4_name)
 ```
 
 ![](man/figures/simple.gif)
 
 ## Acknowledgements
 
-  - R Core for developing and maintaining the language.
-  - CRAN maintainers, for patiently shepherding packages onto CRAN and
+-   R Core for developing and maintaining the language.
+-   CRAN maintainers, for patiently shepherding packages onto CRAN and
     maintaining the repository
